@@ -124,26 +124,28 @@ with tab_forecast:
 
     def _reset_whatif():
         for feat in top_features:
-            st.session_state.pop(f"whatif_{feat}", None)
+            st.session_state[f"whatif_{feat}"] = round(float(X_base[feat].iloc[0]) * 100.0, 2)
 
     X_sim = X_base.copy()
     with st.expander("What-If Shock Simulator (Adjust Top 4 Lagged FX/Bullion Drivers)", expanded=False):
         st.button("Reset to Observed CBSL Values", on_click=_reset_whatif)
         cols = st.columns(2)
         for idx, feat in enumerate(top_features):
-            cur_pct = float(X_base[feat].iloc[0]) * 100.0
-            lo_pct, hi_pct = [float(v) * 100.0 for v in bundle["feature_bounds"][feat]]
+            cur_pct = round(float(X_base[feat].iloc[0]) * 100.0, 2)
+            lo_pct, hi_pct = [round(float(v) * 100.0, 2) for v in bundle["feature_bounds"][feat]]
             lo_pct = min(lo_pct, cur_pct)
             hi_pct = max(hi_pct, cur_pct)
+            key = f"whatif_{feat}"
+            if key not in st.session_state:
+                st.session_state[key] = cur_pct
             with cols[idx % 2]:
                 sim_pct = st.slider(
                     f"{feat} (observed: {cur_pct:+.2f}%)",
-                    min_value=round(lo_pct, 2),
-                    max_value=round(hi_pct, 2),
-                    value=round(cur_pct, 2),
+                    min_value=float(lo_pct),
+                    max_value=float(hi_pct),
                     step=0.10,
                     format="%.2f%%",
-                    key=f"whatif_{feat}",
+                    key=key,
                 )
                 X_sim.iloc[0, X_sim.columns.get_loc(feat)] = sim_pct / 100.0
 
