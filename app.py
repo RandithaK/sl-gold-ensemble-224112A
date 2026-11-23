@@ -232,15 +232,28 @@ with tab_leaderboard:
     lb_plot["RMSE_Display"] = lb_plot["RMSE (LKR/oz)"] * unit_scale
     naive_rmse = float(lb_plot.loc[lb_plot["Model"] == "Naive Persistence (y[t-1])", "RMSE_Display"].iloc[0])
 
+    paradigm_colors = {
+        "Boosting": "#2563eb",
+        "Bagging": "#16a34a",
+        "Stacking": "#d97706",
+        "Hybrid (Time-Series)": "#7c3aed",
+        "Baseline": "#64748b",
+        "Time-Series Baseline": "#dc2626",
+    }
+
     c_left, c_right = st.columns(2)
     with c_left:
+        rmse_sorted = lb_plot.sort_values("RMSE_Display", ascending=True)
         fig_rmse = px.bar(
-            lb_plot.sort_values("RMSE_Display", ascending=False),
+            rmse_sorted,
             x="RMSE_Display",
             y="Model",
             color="Paradigm",
+            color_discrete_map=paradigm_colors,
+            category_orders={"Model": rmse_sorted["Model"].tolist()},
             orientation="h",
             title=f"Test RMSE ({unit_short}) — Lower is Better",
+            labels={"RMSE_Display": f"Test RMSE ({unit_short})"},
         )
         fig_rmse.add_shape(
             type="line",
@@ -258,12 +271,14 @@ with tab_leaderboard:
         st.plotly_chart(fig_rmse, width="stretch")
 
     with c_right:
-        dir_df = lb_plot.dropna(subset=["Dir. Accuracy (%)"]).sort_values("Dir. Accuracy (%)", ascending=True)
+        dir_df = lb_plot.dropna(subset=["Dir. Accuracy (%)"]).sort_values("Dir. Accuracy (%)", ascending=False)
         fig_dir = px.bar(
             dir_df,
             x="Dir. Accuracy (%)",
             y="Model",
             color="Paradigm",
+            color_discrete_map=paradigm_colors,
+            category_orders={"Model": dir_df["Model"].tolist()},
             orientation="h",
             title="Directional Accuracy (%) — Higher is Better",
         )
